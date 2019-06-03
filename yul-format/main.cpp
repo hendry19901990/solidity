@@ -18,34 +18,31 @@ using namespace std;
 
 namespace po = boost::program_options;
 
-boost::optional<std::string> prettyPrint(
-	std::string const& _sourceCode,
-	std::string const& _sourceName,
-	yul::EVMDialect const& _evmDialect,
-	langutil::ErrorReporter& _errorReporter
-)
-{
-	langutil::EVMVersion const evmVersion = *langutil::EVMVersion::fromString("petersburg");
-	yul::EVMDialect const& evmDialect = yul::EVMDialect::strictAssemblyForEVM(evmVersion);
-	yul::Parser parser{_errorReporter, evmDialect};
-	langutil::CharStream source{_sourceCode, _sourceName};
-	auto scanner = make_shared<langutil::Scanner>(source);
-	shared_ptr<yul::Block> ast = parser.parse(scanner, true);
-
-	if (_errorReporter.hasErrors())
-		return boost::none;
-	else
-		return {yul::AsmPrinter{true}(*ast)};
-}
-
 struct Flags
 {
 	langutil::EVMVersion evmVersion;
+	yul::AssemblyStack::Language language;
 	std::string sourceName;
 	std::string sourceCode;
 };
 
-boost::optional<Flags> parseArgs(int argc, const char* argv[])
+static boost::optional<yul::AssemblyStack::Language> parseAssemblyLanguageId(string const& name)
+{
+	using Language = yul::AssemblyStack::Language;
+
+	if (name == "yul")
+		return {Language::Yul};
+	else if (name == "assembly")
+		return {Language::Assembly};
+	else if (name == "strict-assembly")
+		return {Language::StrictAssembly};
+	else if (name == "ewasm")
+		return {Language::EWasm};
+
+	return boost::none;
+}
+
+boost::optional<Flags> parseArgs(int _argc, char const* _argv[])
 {
 	po::options_description options(
 		R"(yul-format, the Yul source code pretty printer.
@@ -63,6 +60,7 @@ Allowed options)",
 			po::value<string>()->value_name("version"),
 			"Select desired EVM version. Either homestead, tangerineWhistle, spuriousDragon, byzantium, constantinople or petersburg (default)."
 		)
+		("lang", po::value<string>(), "Language to format. One of yul, assembly, strict-assembly, ewasm.")
 		("input-file", po::value<string>(), "Input file to format.");
 
 	po::positional_options_description filesPositions;
@@ -71,7 +69,7 @@ Allowed options)",
 	po::variables_map arguments;
 	try
 	{
-		po::command_line_parser cmdLineParser(argc, argv);
+		po::command_line_parser cmdLineParser(_argc, _argv);
 		cmdLineParser.options(options).positional(filesPositions);
 		po::store(cmdLineParser.run(), arguments);
 	}
@@ -99,40 +97,47 @@ Allowed options)",
 		}
 		evmVersion = *value;
 	}
-	if (arguments.count("input-file"))
-		return Flags{
-			evmVersion,
-			arguments["input-file"].as<string>(),
-			dev::readFileAsString(arguments["input-file"].as<string>())
-		};
-	else
-		return Flags{
-			evmVersion,
-			"stdin",
-			dev::readStandardInput()
-		};
+	yul::AssemblyStack::Language lang = yul::AssemblyStack::Language::Yul;
+	if (arguments.count("lang"))
+	{
+		auto parsedLangId = parseAssemblyLanguageId(arguments["lang"].as<string>());
+		if (!parsedLangId)
+		{
+			cerr << "Invalid language ID. Try --help.\n";
+			return boost::none;
+		}
+		else
+			lang = *parsedLangId;
+	}
+	tuple<string, string> const input = [&]() -> tuple<string, string>
+	{
+		if (arguments.count("input-file"))
+			return make_tuple(
+				arguments["input-file"].as<string>(),
+				dev::readFileAsString(arguments["input-file"].as<string>())
+			);
+		else
+			return make_tuple(string{"stdin"}, dev::readStandardInput());
+	}();
+	return Flags{
+		evmVersion,
+		lang,
+		get<0>(input),
+		get<1>(input)
+	};
 }
 
-int main(int argc, const char* argv[])
+int main(int argc, char const* argv[])
 {
 	boost::optional<Flags> flags = parseArgs(argc, argv);
 	if (!flags)
 		return EXIT_FAILURE;
 
-	langutil::ErrorList errors;
-	langutil::ErrorReporter errorReporter{errors};
-
-	optional<string> const pretty = prettyPrint(
-		flags->sourceCode,
-		flags->sourceName,
-		yul::EVMDialect::strictAssemblyForEVM(flags->evmVersion),
-		errorReporter
-	);
-
-	if (!errorReporter.hasErrors())
-		cout << *pretty;
+	yul::AssemblyStack stack{flags->evmVersion, flags->language, {}};
+	if (stack.parse(flags->sourceName, flags->sourceCode))
+		cout << yul::AsmPrinter{true}(*stack.parseTree().code);
 	else
-		for (shared_ptr<langutil::Error const> const& error : errors)
+		for (shared_ptr<langutil::Error const> const& error : stack.errors())
 			langutil::SourceReferenceFormatterHuman{cerr, true}.printErrorInformation(*error);
 
 	return EXIT_SUCCESS;
