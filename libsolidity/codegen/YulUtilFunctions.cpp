@@ -517,6 +517,109 @@ string YulUtilFunctions::arrayLengthFunction(ArrayType const& _type)
 	});
 }
 
+std::string YulUtilFunctions::resizeDynamicArrayFunction(ArrayType const& _type)
+{
+	solAssert(_type.location() == DataLocation::Storage, "");
+	solAssert(_type.isDynamicallySized(), "");
+	if (!_type.isByteArray() && _type.baseType()->storageBytes() < 32)
+		solAssert(_type.baseType()->isValueType(), "Invalid storage size for non-value type.");
+
+	string functionName = "resize_array_" + _type.identifier();
+	return m_functionCollector->createFunction(functionName, [&]() {
+		return Whiskers(R"(
+			function <functionName>(array, newLen) {
+				let oldLen := <fetchLength>(array)
+				<?isByteArray>
+				// For a "long" byte array, store length as 2*length+1
+				newLen := add(1, mul(newLen, 2))
+				</isByteArray>
+
+				// Store new length
+				sstore(array, newLen)
+
+				// Size was reduced, clear end of array
+				if lt(newLen, oldLen) {
+					let oldSize := <convertToSize>(oldLen)
+					let newSize := <convertToSize>(newLen)
+					let arrayDataStart := <dataPosition>(array)
+					let deleteStart := add(arrayDataStart, newSize)
+					let deleteEnd := add(arrayDataStart, oldSize)
+					<clearStorageRange>(deleteStart, deleteEnd)
+				}
+			})")
+			("functionName", functionName)
+			("fetchLength", arrayLengthFunction(_type))
+			("isByteArray", _type.isByteArray())
+			("convertToSize", arrayConvertLengthToSize(_type))
+			("dataPosition", arrayDataAreaFunction(_type))
+			("clearStorageRange", clearStorageRangeFunction(*_type.baseType()))
+			.render();
+	});
+}
+
+string YulUtilFunctions::clearStorageRangeFunction(Type const& _type)
+{
+	string functionName = "clear_storage_range_" + _type.identifier();
+
+	return m_functionCollector->createFunction(functionName, [&]() {
+		return Whiskers(R"(
+			function <functionName>(start, end) {
+				for {} iszero(gt(start, end)) { start := add(start, <storageSize>) }
+				{
+					<updateStorageValue>(start, 0, <zeroValue>())
+				}
+			}
+		)")
+		("functionName", functionName)
+		("updateStorageValue", updateStorageValueFunction(_type))
+		("zeroValue", zeroValueFunction(_type))
+		("storageSize", _type.storageSize().str())
+		.render();
+	});
+}
+
+string YulUtilFunctions::arrayConvertLengthToSize(ArrayType const& _type)
+{
+	string functionName = "array_convert_length_to_size_" + _type.identifier();
+	return m_functionCollector->createFunction(functionName, [&]() {
+		Type const& baseType = *_type.baseType();
+		unsigned const baseBytes = baseType.storageBytes();
+
+		return Whiskers(R"(
+			function <functionName>(length) -> size {
+				size := length
+				<?storage>
+					<?storageSizeLessEq1>
+						<?baseBytesIs0>
+							size := 1
+						</baseBytesIs0>
+						<?baseBytesLessEq16>
+							size := div(<itemsPerSlot>, <add>(length, <sub>(<itemsPerSlot>, 1)))
+						</baseBytesLessEq16>
+					<!storageSizeLessEq1>
+						size := <mul>(<storageSize>, length)
+					</storageSizeLessEq1>
+				<!storage>
+					<?notByteArray>
+						size := <mul>(length, <elementSize>)
+					</notByteArray>
+				</storage>
+			})")
+			("functionName", functionName)
+			("storage", _type.location() == DataLocation::Storage)
+			("storageSizeLessEq1", baseType.storageSize() <= 1)
+			("baseBytesIs0", baseBytes == 0)
+			("baseBytesLessEq16", baseBytes <= 16)
+			("itemsPerSlot", baseBytes != 0 ? (32 / baseBytes) : 0)
+			("add", overflowCheckedUIntAddFunction(TypeProvider::uint256()->numBits()))
+			("sub", overflowCheckedUIntSubFunction())
+			("storageSize", baseType.storageSize().str())
+			("elementSize", _type.location() == DataLocation::Memory ? baseType.memoryHeadSize() : baseType.calldataEncodedSize())
+			("notByteArray", !_type.isByteArray())
+			("mul", overflowCheckedUIntMulFunction(TypeProvider::uint256()->numBits()))
+			.render();
+	});
+}
 string YulUtilFunctions::arrayAllocationSizeFunction(ArrayType const& _type)
 {
 	solAssert(_type.dataStoredIn(DataLocation::Memory), "");

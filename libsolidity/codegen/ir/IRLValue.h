@@ -34,6 +34,7 @@ namespace solidity
 class VariableDeclaration;
 class IRGenerationContext;
 class Type;
+class ArrayType;
 
 /**
  * Abstract class used to retrieve, delete and store data in LValues.
@@ -104,6 +105,25 @@ private:
 	boost::variant<std::string, unsigned> const m_offset;
 };
 
+/**
+ * Reference to the "length" member of a dynamically-sized array. This is an LValue with special
+ * semantics since assignments to it might reduce its length and thus arrays members have to be
+ * deleted.
+ */
+class IRStorageArrayLength: public IRLValue
+{
+public:
+	/// Constructs the LValue, assumes that the reference to the array head is already on the stack.
+	IRStorageArrayLength(IRGenerationContext& _context, std::string const _slot, Type const* _type);
+
+	std::string retrieveValue() const override;
+	std::string storeValue(std::string const& _value, Type const& _type) const override;
+	std::string setToZero() const override;
+
+private:
+	ArrayType const& arrayType() const;
+	std::string const m_slot;
+};
 
 }
 }
