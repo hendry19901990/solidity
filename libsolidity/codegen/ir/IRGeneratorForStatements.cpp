@@ -1113,6 +1113,10 @@ string IRGeneratorForStatements::binaryOperation(
 			case Token::Div:
 				fun = m_utils.overflowCheckedIntDivFunction(*type);
 				break;
+			case Token::Mod:
+				solAssert(!type->isSigned(), "");
+				fun = m_utils.checkedIntModFunction();
+				break;
 			default:
 				break;
 		}

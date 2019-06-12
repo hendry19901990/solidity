@@ -455,6 +455,19 @@ string YulUtilFunctions::overflowCheckedIntDivFunction(IntegerType const& _type)
 	});
 }
 
+string YulUtilFunctions::checkedIntModFunction()
+{
+	string functionName = "checked_mod";
+	return m_functionCollector->createFunction(functionName, [&]() {
+		return R"(
+			function checked_mod(x, y) -> r {
+				if iszero(y) { revert(0, 0) }
+				r := mod(x, y)
+			}
+			)";
+	});
+}
+
 string YulUtilFunctions::overflowCheckedIntSubFunction(IntegerType const& _type)
 {
 	string functionName = "checked_sub_" + _type.identifier();
