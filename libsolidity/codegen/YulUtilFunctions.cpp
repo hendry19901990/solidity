@@ -433,8 +433,6 @@ string YulUtilFunctions::overflowCheckedUIntMulFunction(size_t _bits)
 
 string YulUtilFunctions::overflowCheckedIntDivFunction(IntegerType const& _type)
 {
-	unsigned bits = _type.numBits();
-	solAssert(0 < bits && bits <= 256 && bits % 8 == 0, "");
 	string functionName = "checked_div_" + _type.identifier();
 	return m_functionCollector->createFunction(functionName, [&]() {
 		return
@@ -451,10 +449,10 @@ string YulUtilFunctions::overflowCheckedIntDivFunction(IntegerType const& _type)
 				r := <?signed>s</signed>div(x, y)
 			}
 			)")
-				("functionName", functionName)
-				("signed", _type.isSigned())
-				("minVal", (0 - (u256(1) << (bits - 1))).str())
-				.render();
+			("functionName", functionName)
+			("signed", _type.isSigned())
+			("minVal", toCompactHexWithPrefix(u256(_type.minValue())))
+			.render();
 	});
 }
 
