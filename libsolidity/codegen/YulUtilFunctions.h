@@ -90,7 +90,7 @@ public:
 	/// of 32 or the input if it is a multiple of 32.
 	std::string roundUpFunction();
 
-	std::string overflowCheckedUIntAddFunction(size_t _bits);
+	std::string overflowCheckedIntAddFunction(IntegerType const& _type);
 
 	std::string overflowCheckedUIntMulFunction(size_t _bits);
 
