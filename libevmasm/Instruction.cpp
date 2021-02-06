@@ -36,6 +36,7 @@ std::map<std::string, Instruction> const solidity::evmasm::c_instructions =
 {
 	{ "STOP", Instruction::STOP },
 	{ "ADD", Instruction::ADD },
+	{ "UPPER", Instruction::UPPER },
 	{ "SUB", Instruction::SUB },
 	{ "MUL", Instruction::MUL },
 	{ "DIV", Instruction::DIV },
@@ -182,6 +183,7 @@ static std::map<Instruction, InstructionInfo> const c_instructionInfo =
 { //												Add, Args, Ret, SideEffects, GasPriceTier
 	{ Instruction::STOP,		{ "STOP",			0, 0, 0, true,  Tier::Zero } },
 	{ Instruction::ADD,			{ "ADD",			0, 2, 1, false, Tier::VeryLow } },
+	{ Instruction::UPPER,	    { "UPPER",			0, 1, 1, true, Tier::Zero } },
 	{ Instruction::SUB,			{ "SUB",			0, 2, 1, false, Tier::VeryLow } },
 	{ Instruction::MUL,			{ "MUL",			0, 2, 1, false, Tier::Low } },
 	{ Instruction::DIV,			{ "DIV",			0, 2, 1, false, Tier::Low } },

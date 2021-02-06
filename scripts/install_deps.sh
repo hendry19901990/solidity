@@ -219,7 +219,6 @@ case $(uname -s) in
                     g++ \
                     gcc \
                     git \
-                    libboost-all-dev \
                     unzip \
                     "$install_z3"
 

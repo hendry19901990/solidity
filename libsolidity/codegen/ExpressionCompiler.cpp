@@ -837,6 +837,14 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			}
 			break;
 		}
+		case FunctionType::Kind::UPPER:
+		{
+            solAssert(arguments.size() == 1, "");
+		    arguments[0]->accept(*this);
+			m_context << Instruction::UPPER;
+			 
+		   break;
+		}
 		case FunctionType::Kind::Event:
 		{
 			_functionCall.expression().accept(*this);

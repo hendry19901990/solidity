@@ -220,8 +220,12 @@ private:
 				smt::smtSort(*TypeProvider::bytesStorage()),
 				smtSort(*TypeProvider::fixedBytes(32))
 			)},
+			{"upper", std::make_shared<smtutil::ArraySort>(
+				smt::smtSort(*TypeProvider::bytesMemory()),
+				smtSort(*TypeProvider::fixedBytes(32))
+			)},
 			{"ripemd160", std::make_shared<smtutil::ArraySort>(
-				smt::smtSort(*TypeProvider::bytesStorage()),
+				smt::smtSort(*TypeProvider::bytesMemory()),
 				smtSort(*TypeProvider::fixedBytes(20))
 			)},
 			{"ecrecover", std::make_shared<smtutil::ArraySort>(

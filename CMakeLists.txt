@@ -39,6 +39,9 @@ option(SOLC_STATIC_STDLIBS "Link solc against static versions of libgcc and libs
 include(EthCcache)
 
 # Let's find our dependencies
+SET(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/usr/local/include/boost")
+SET(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/usr/local/lib")
+
 include(EthDependencies)
 include(jsoncpp)
 include(range-v3)

@@ -47,6 +47,7 @@ int magicVariableToID(std::string const& _name)
 	else if (_name == "ecrecover") return -6;
 	else if (_name == "gasleft") return -7;
 	else if (_name == "keccak256") return -8;
+	else if (_name == "upper") return -9;
 	else if (_name == "msg") return -15;
 	else if (_name == "mulmod") return -16;
 	else if (_name == "now") return -17;
@@ -73,6 +74,7 @@ inline vector<shared_ptr<MagicVariableDeclaration const>> constructMagicVariable
 
 	return {
 		magicVarDecl("abi", TypeProvider::magic(MagicType::Kind::ABI)),
+		magicVarDecl("upper", TypeProvider::function(strings{"bytes32"}, strings{"bytes32"}, FunctionType::Kind::UPPER, false, StateMutability::View)),
 		magicVarDecl("addmod", TypeProvider::function(strings{"uint256", "uint256", "uint256"}, strings{"uint256"}, FunctionType::Kind::AddMod, false, StateMutability::Pure)),
 		magicVarDecl("assert", TypeProvider::function(strings{"bool"}, strings{}, FunctionType::Kind::Assert, false, StateMutability::Pure)),
 		magicVarDecl("block", TypeProvider::magic(MagicType::Kind::Block)),

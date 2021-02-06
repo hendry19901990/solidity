@@ -180,6 +180,8 @@ u256 EVMInstructionInterpreter::eval(
 		uint64_t size = uint64_t(arg[1] & uint64_t(-1));
 		return u256(keccak256(readMemory(offset, size)));
 	}
+	case Instruction::UPPER:
+		return 0;
 	case Instruction::ADDRESS:
 		return m_state.address;
 	case Instruction::BALANCE:

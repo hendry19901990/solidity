@@ -1130,6 +1130,7 @@ public:
 	{
 		Internal, ///< stack-call using plain JUMP
 		External, ///< external call using CALL
+		UPPER, ///< UPPERCASE
 		DelegateCall, ///< external call using DELEGATECALL, i.e. not exchanging the storage
 		BareCall, ///< CALL without function hash
 		BareCallCode, ///< CALLCODE without function hash
@@ -1341,6 +1342,7 @@ public:
 		case FunctionType::Kind::BareCallCode:
 		case FunctionType::Kind::BareDelegateCall:
 		case FunctionType::Kind::BareStaticCall:
+	//	case FunctionType::Kind::UPPER:
 			return true;
 		default:
 			return false;

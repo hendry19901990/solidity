@@ -2842,6 +2842,7 @@ string FunctionType::richIdentifier() const
 	case Kind::Declaration: id += "declaration"; break;
 	case Kind::Internal: id += "internal"; break;
 	case Kind::External: id += "external"; break;
+	case Kind::UPPER:    id += "upper"; break;
 	case Kind::DelegateCall: id += "delegatecall"; break;
 	case Kind::BareCall: id += "barecall"; break;
 	case Kind::BareCallCode: id += "barecallcode"; break;

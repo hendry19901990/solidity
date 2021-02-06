@@ -5,7 +5,6 @@ Solidity is a statically typed, contract-oriented, high-level language for imple
 
 ## Table of Contents
 
-- [Background](#background)
 - [Build and Install](#build-and-install)
 - [Example](#example)
 - [Documentation](#documentation)
@@ -14,23 +13,31 @@ Solidity is a statically typed, contract-oriented, high-level language for imple
 - [License](#license)
 - [Security](#security)
 
-## Background
 
-Solidity is a statically-typed curly-braces programming language designed for developing smart contracts
-that run on the Ethereum Virtual Machine. Smart contracts are programs that are executed inside a peer-to-peer
-network where nobody has special authority over the execution, and thus they allow to implement tokens of value,
-ownership, voting, and other kinds of logic.
+## Build and Install Manually for Linux
 
-When deploying contracts, you should use the latest released version of
-Solidity. This is because breaking changes, as well as new features and bug fixes are
-introduced regularly. We currently use a 0.x version
-number [to indicate this fast pace of change](https://semver.org/#spec-item-4).
+First install Boost lib manually
+```bash
+ wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.bz2
+ tar -zxvf boost_1_66_0.tar.bz2 && cd boost_1_66_0.tar.bz2
+ ./bootstrap.sh --prefix=/usr/local
+ ./b2 install
+```
 
-## Build and Install
+Second, install z3
+```bash
+apt-get install -y z3
+```
 
-Instructions about how to build and install the Solidity compiler can be
-found in the [Solidity documentation](https://docs.soliditylang.org/en/latest/installing-solidity.html#building-from-source).
-
+Third, install the rest dependencies
+```bash
+  cd scripts && ./install_deps.sh
+```
+Finally, build the project. Note: this one will install binaries solc at usr/local/bin
+```bash
+  mkdir build
+  cd scripts && ./build.sh
+```
 
 ## Example
 

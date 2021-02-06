@@ -469,6 +469,7 @@ void CHC::endVisit(FunctionCall const& _funCall)
 		unknownFunctionCall(_funCall);
 		break;
 	case FunctionType::Kind::KECCAK256:
+	case FunctionType::Kind::UPPER:
 	case FunctionType::Kind::ECRecover:
 	case FunctionType::Kind::SHA256:
 	case FunctionType::Kind::RIPEMD160:
